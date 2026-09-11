@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: default
+data:
+  schema.sql: |
+    CREATE TABLE IF NOT EXISTS iss_telemetry (
+        id SERIAL PRIMARY KEY,
+        latitude DOUBLE PRECISION NOT NULL,
+        longitude DOUBLE PRECISION NOT NULL,
+        altitude DOUBLE PRECISION NOT NULL,
+        velocity DOUBLE PRECISION NOT NULL,
+        visibility VARCHAR(50),
+        captured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );

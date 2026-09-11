@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: default
+data:
+  schema.sql: |
+    CREATE TABLE IF NOT EXISTS iss_telemetry (
+        id SERIAL PRIMARY KEY,
+        latitude DOUBLE PRECISION NOT NULL,
+        longitude DOUBLE PRECISION NOT NULL,
+        altitude DOUBLE PRECISION NOT NULL,
+        velocity DOUBLE PRECISION NOT NULL,
+        visibility VARCHAR(50),
+        captured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orbitalpulse-db
+  namespace: default
+  labels:
+    app: orbitalpulse-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orbitalpulse-db
+  template:
+    metadata:
+      labels:
+        app: orbitalpulse-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: orbitalpulse-db-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orbitalpulse-db-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: orbitalpulse-db-secret
+                  key: POSTGRES_DB
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+            - name: init-script-volume
+              mountPath: /docker-entrypoint-initdb.d/
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: orbitalpulse-pvc
+        - name: init-script-volume
+          configMap:
+            name: postgres-init-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: orbitalpulse-db
