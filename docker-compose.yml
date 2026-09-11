@@ -14,6 +14,11 @@ services:
       - ./sql:/docker-entrypoint-initdb.d
     networks:
       - orbitalpulse-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   adminer:
     image: adminer:latest
@@ -25,6 +30,23 @@ services:
       - postgres
     networks:
       - orbitalpulse-net
+
+  collector:
+    build: .
+    container_name: orbitalpulse_collector
+    restart: on-failure
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - ISS_API_URL=https://api.wheretheiss.at/v1/satellites/25544
+    networks:
+      - orbitalpulse-net
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pg_data:
