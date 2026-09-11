@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: orbitalpulse-collector
+  namespace: default
+  labels:
+    app: orbitalpulse-collector
+spec:
+  schedule: "*/1 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: collector
+              image: orbitalpulse_collector:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: DB_HOST
+                  value: "postgres"
+                - name: DB_PORT
+                  value: "5432"
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: orbitalpulse-db-secret
+                      key: POSTGRES_USER
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: orbitalpulse-db-secret
+                      key: POSTGRES_PASSWORD
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: orbitalpulse-db-secret
+                      key: POSTGRES_DB
+          restartPolicy: OnFailure
