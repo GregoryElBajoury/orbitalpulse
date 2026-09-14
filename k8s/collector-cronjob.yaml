@@ -21,7 +21,10 @@ spec:
                 - name: DB_HOST
                   value: "postgres"
                 - name: DB_PORT
-                  value: "5432"
+                  valueFrom:
+                    secretKeyRef:
+                      name: orbitalpulse-db-secret
+                      key: DB_PORT
                 - name: POSTGRES_USER
                   valueFrom:
                     secretKeyRef:

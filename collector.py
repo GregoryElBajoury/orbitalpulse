@@ -15,12 +15,16 @@ logging.basicConfig(
 
 API_URL = os.getenv("ISS_API_URL", "https://api.wheretheiss.at/v1/satellites/25544")
 
-# Paramètres de connexion PostgreSQL (avec les valeurs par défaut de ton docker-compose)
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5433")
-DB_NAME = os.getenv("POSTGRES_DB", "orbitalpulse")
-DB_USER = os.getenv("POSTGRES_USER", "iamgroot")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "iamgroot93420")
+# Paramètres de connexion PostgreSQL récupérés strictement de l'environnement
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("POSTGRES_DB")
+DB_USER = os.getenv("POSTGRES_USER")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+
+# Vérification pour s'assurer qu'aucune information critique n'est absente
+if not all([DB_HOST, DB_NAME if 'DB_Name' in locals() else DB_NAME, DB_USER, DB_PASSWORD]):
+    raise EnvironmentError("Les variables d'environnement pour la base de données sont incomplètes.")
 
 def fetch_iss_position():
     """Interroge l'API publique de l'ISS et retourne les données métriques."""
@@ -52,7 +56,7 @@ def fetch_iss_position():
     return None
 
 def save_to_db(data):
-    """Enregistre les données de télémétrie dans la base PostgreSQL."""
+    """Enregistre les données de télémétrie et applique une rétention glissante de 24h."""
     if not data:
         return
 
@@ -66,11 +70,12 @@ def save_to_db(data):
         )
         cursor = conn.cursor()
         
-        query = """
+        # 1. Insertion de la nouvelle position
+        insert_query = """
             INSERT INTO iss_telemetry (latitude, longitude, altitude, velocity, visibility, captured_at)
             VALUES (%s, %s, %s, %s, %s, to_timestamp(%s))
         """
-        cursor.execute(query, (
+        cursor.execute(insert_query, (
             data.get('latitude'),
             data.get('longitude'),
             data.get('altitude'),
@@ -79,13 +84,17 @@ def save_to_db(data):
             data.get('timestamp')
         ))
         
+        # 2. Purge des anciennes données de plus de 24 heures
+        purge_query = "DELETE FROM iss_telemetry WHERE captured_at < NOW() - INTERVAL '24 hours';"
+        cursor.execute(purge_query)
+        
         conn.commit()
         cursor.close()
         conn.close()
-        logging.info("Données de télémétrie insérées avec succès dans PostgreSQL.")
+        logging.info("Données insérées et purge des anciennes positions (> 24h) effectuée avec succès.")
     
     except Exception as db_err:
-        logging.error(f"Erreur lors de l'insertion en base de données : {db_err}")
+        logging.error(f"Erreur lors de l'interaction avec la base de données : {db_err}")
 
 if __name__ == "__main__":
     telemetry_data = fetch_iss_position()
