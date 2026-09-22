@@ -8,7 +8,7 @@
 
 Le projet est conçu selon une approche cloud-native, conteneurisée et découplée :
 
-* **Collecteur de Données :** Script Python interrogeant l'API officielle de l'ISS (`wheretheiss.at`), planifié sous forme de `CronJob` Kubernetes ou de service conteneurisé.
+* **Collecteur de Données :** Script Python interrogeant l'API officielle de l'ISS (`wheretheiss.at`), exécuté de manière éphémère et automatisée via un `CronJob` Kubernetes (un conteneur est instancié à chaque exécution planifiée pour collecter et insérer la télémétrie, puis disparaît à la fin de la tâche).
 * **Stockage :** Base de données relationnelle **PostgreSQL** pour l'historisation des points de télémétrie (latitude, longitude, altitude, vitesse, visibilité, horodatage).
 * **Interface & Visualisation :** Application **Streamlit** intégrée avec **Plotly** (`graph_objects`) pour un affichage sphérique en 3D (projection orthographique) avec tracé de la trajectoire orbitale récente.
 * **Orchestration & DevOps :** Docker, Docker Compose (pour le développement local) et Kubernetes / Minikube (pour la production/homelab).
