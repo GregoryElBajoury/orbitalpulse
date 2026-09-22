@@ -70,14 +70,10 @@ Idéal pour reproduire un environnement de production orienté DevOps.
 minikube start
 ```
 
-### Appliquer les manifests Kubernetes :
+### Appliquer tous les manifests Kubernetes du dossier k8s :
 
 ```bash
-kubectl apply -f k8s/pvc.yaml
-kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/postgres-deployment.yaml
-kubectl apply -f k8s/collector-cronjob.yaml
-kubectl apply -f k8s/ui-deployment.yaml
+kubectl apply -f k8s/
 ```
 
 ### Builder et charger l'image de l'UI dans Minikube :
