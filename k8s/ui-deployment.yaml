@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orbitalpulse-ui
+  labels:
+    app: orbitalpulse-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orbitalpulse-ui
+  template:
+    metadata:
+      labels:
+        app: orbitalpulse-ui
+    spec:
+      containers:
+      - name: ui
+        image: orbitalpulse-ui:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8501
+        env:
+        - name: DB_HOST
+          value: "postgres" # Service K8s pointant vers Postgres
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: orbitalpulse-db-secret
+              key: DB_PORT
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: orbitalpulse-db-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: orbitalpulse-db-secret
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: orbitalpulse-db-secret
+              key: POSTGRES_DB
+        - name: CESIUM_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: orbitalpulse-db-secret
+              key: CESIUM_TOKEN
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orbitalpulse-ui-service
+spec:
+  type: NodePort
+  selector:
+    app: orbitalpulse-ui
+  ports:
+    - protocol: TCP
+      port: 8501
+      targetPort: 8501

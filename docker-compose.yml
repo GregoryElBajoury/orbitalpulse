@@ -32,7 +32,9 @@ services:
       - orbitalpulse-net
 
   collector:
-    build: .
+    build:
+      context: .
+      target: collector-runtime
     container_name: orbitalpulse_collector
     restart: on-failure
     environment:
@@ -42,6 +44,26 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - ISS_API_URL=https://api.wheretheiss.at/v1/satellites/25544
+    networks:
+      - orbitalpulse-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ui:
+    build:
+      context: .
+      target: ui-runtime
+    container_name: orbitalpulse_ui
+    restart: always
+    ports:
+      - "8501:8501"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     networks:
       - orbitalpulse-net
     depends_on:
