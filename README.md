@@ -11,6 +11,7 @@ Le projet est conçu selon une approche cloud-native, conteneurisée et découpl
 * **Collecteur de Données :** Script Python interrogeant l'API officielle de l'ISS (`wheretheiss.at`), exécuté de manière éphémère et automatisée via un `CronJob` Kubernetes (un conteneur est instancié à chaque exécution planifiée pour collecter et insérer la télémétrie, puis disparaît à la fin de la tâche).
 * **Stockage :** Base de données relationnelle **PostgreSQL** pour l'historisation des points de télémétrie (latitude, longitude, altitude, vitesse, visibilité, horodatage).
 * **Interface & Visualisation :** Application **Streamlit** intégrée avec **Plotly** (`graph_objects`) pour un affichage sphérique en 3D (projection orthographique) avec tracé de la trajectoire orbitale récente.
+* **CI/CD & Automatisation :** Pipeline GitHub Actions pour l'intégration continue (tests unitaires, linting et validation du build Docker).
 * **Orchestration & DevOps :** Docker, Docker Compose (pour le développement local) et Kubernetes / Minikube (pour la production/homelab).
 
 ---
@@ -19,6 +20,7 @@ Le projet est conçu selon une approche cloud-native, conteneurisée et découpl
 
 ```text
 orbitalpulse/
+├── .github/workflows/ci.yml    # Pipeline CI/CD (GitHub Actions)
 ├── k8s/                        # Manifestes Kubernetes
 │   ├── adminer.yaml
 │   ├── collector-cronjob.yaml
@@ -36,6 +38,25 @@ orbitalpulse/
 └── README.md
 ```
 
+## Pipeline CI/CD (GitHub Actions)
+
+Le projet intègre une pipeline d'intégration continue (`ci.yml`) déclenchée automatiquement sur chaque push ou pull_request vers les branches main et master. Elle s'articule autour de deux jobs :
+
+### test-and-lint :
+
+- Configure l'environnement Python.
+
+- Installe les dépendances et lance `flake8` pour vérifier la qualité du code et la syntaxe.
+
+- Exécute les tests unitaires avec `pytest` dans un contexte de base de données de test éphémère.
+
+### docker-build :
+
+- Se déclenche uniquement si le job de test et de linting réussit.
+
+- Utilise **Docker Buildx** pour valider la compilation et le multi-stage build des images conteneurs sans push inutile sur un registre.
+---
+
 ##  Guide de Démarrage
 
 ### Option 1 : Lancement rapide en local avec Docker Compose
@@ -44,9 +65,9 @@ Idéal pour tester rapidement l'ensemble des services sur sa machine.
 1. **Configurer les variables d'environnement :**
    Duplique le fichier d'exemple et renseigne tes identifiants :
 
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+cp .env.example .env
+```
 
  ## 1.Lancer la stack complète :
 
