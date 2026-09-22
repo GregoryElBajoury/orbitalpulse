@@ -71,6 +71,7 @@ minikube start
 ```
 
 ### Appliquer tous les manifests Kubernetes du dossier k8s :
+(Veillez à bien exclure les fichiers d'exemple non encodés de type secret.example.yaml)
 
 ```bash
 kubectl apply -f k8s/
@@ -84,11 +85,24 @@ minikube image load orbitalpulse-ui:latest
 kubectl rollout restart deployment/orbitalpulse-ui
 ```
 
-### Accéder au dashboard exposé via NodePort :
+### Accéder aux interfaces web (Minikube) :
+
+Pour ouvrir directement les interfaces graphiques dans votre navigateur :
+
+- Afficher l'interface Adminer (Gestion de la base de données) :
+Ouvrez un premier terminal et exécutez :
 
 ```bash
 minikube service orbitalpulse-ui-service
 ```
+
+- Afficher le Dashboard Streamlit (Interface 3D de l'ISS) :
+Ouvrez un autre onglet de terminal et exécutez :
+
+```bash
+minikube service orbitalpulse-adminer-svc
+```
+
 
 ### Fonctionnalités Clés
 
@@ -97,3 +111,10 @@ minikube service orbitalpulse-ui-service
 - Visualisation Spatiale Avancée : Affichage d'un globe 3D interactif centré sur la position courante de l'ISS avec affichage de la traînée historique des derniers points relevés.
 
 - Résilience : Gestion des tâches de collecte automatisées par Kubernetes CronJobs.
+
+
+### Pistes d'Amélioration & Optimisations Futures
+
+Gestion du rendu de l'interface : Optimisation du cycle de rafraîchissement de l'application Streamlit (gestion de la frame/redessin du globe 3D) pour fluidifier l'expérience utilisateur et éviter les micro-scintillements lors des requêtes périodiques en base de données.
+
+
